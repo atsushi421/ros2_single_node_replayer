@@ -76,12 +76,10 @@ if __name__ == "__main__":
 
     with open(args.dir + "/basic_info.yaml", 'r') as f:
         basic_info = yaml.safe_load(f)
-    with open(args.dir + "/remappings.yaml", 'r') as f:
-        remappings = yaml.safe_load(f)
 
     main(
         basic_info['node_name'],
         basic_info['namespace'],
         basic_info['package_name'],
         basic_info['executable'],
-        remappings)
+        f"{args.dir}/remappings.yaml")
