@@ -1,9 +1,10 @@
-import rclpy
-import os
 import argparse
-import yaml
-from datetime import datetime
+import os
 import time
+from datetime import datetime
+
+import rclpy
+import yaml
 
 
 def get_params_file_name(ns, node_name):
@@ -70,11 +71,17 @@ def main(node_name, ns, package_name, executable_name, remapping_file):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Record input topic data for the target node")
-    parser.add_argument("package", type=str, help="package name")
-    parser.add_argument("executable", type=str, help="executable name")
-    parser.add_argument("ns", type=str, help="namespace which target node belongs to")
-    parser.add_argument("node", type=str, help="target node name")
-    parser.add_argument("remapping", type=str, help="topic remapping yaml file")
+    parser.add_argument("dir", type=str, help="target configuation directory")
     args = parser.parse_args()
 
-    main(args.node, args.ns, args.package, args.executable, args.remapping)
+    with open(args.dir + "/basic_info.yaml", 'r') as f:
+        basic_info = yaml.safe_load(f)
+    with open(args.dir + "/remappings.yaml", 'r') as f:
+        remappings = yaml.safe_load(f)
+
+    main(
+        basic_info['node_name'],
+        basic_info['namespace'],
+        basic_info['package_name'],
+        basic_info['executable'],
+        remappings)
