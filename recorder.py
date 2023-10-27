@@ -55,8 +55,9 @@ def main(node_name, ns, package_name, executable_name, remappings):
                        " --ros-args --params-file " + params_file_name + \
                        " -r __ns:=" + ns + " -r __node:=" + node_name
 
-        for k, v in remappings.items():
-            exec_command = exec_command + " -r " + k + ":=" + v
+        if remappings:
+            for k, v in remappings.items():
+                exec_command = exec_command + " -r " + k + ":=" + v
 
         f.write(exec_command)
 
