@@ -29,7 +29,7 @@ def prepare_output_dir(params_file_name):
     os.chdir(logdir)
 
 
-def main(node_name, ns, package_name, executable_name, remapping_file):
+def main(node_name, ns, package_name, executable_name, remappings):
     rclpy.init()
     node = rclpy.create_node("node_input_topic_recorder")
 
@@ -38,11 +38,6 @@ def main(node_name, ns, package_name, executable_name, remapping_file):
 
     # names = node.get_node_names()
     info = node.get_subscriber_names_and_types_by_node(node_name, ns)
-
-    remappings = {}
-    remapping_file_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), remapping_file)
-    with open(remapping_file_path, 'r') as f:
-        remappings = yaml.safe_load(f)
 
     params_file_name = get_params_file_name(ns, node_name)
     prepare_output_dir(params_file_name)
@@ -71,15 +66,16 @@ def main(node_name, ns, package_name, executable_name, remapping_file):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Record input topic data for the target node")
-    parser.add_argument("dir", type=str, help="target configuation directory")
+    parser.add_argument("complete_node_info", type=str, help="target complete node info")
     args = parser.parse_args()
 
-    with open(args.dir + "/basic_info.yaml", 'r') as f:
-        basic_info = yaml.safe_load(f)
+    with open(args.complete_node_info, 'r') as f:
+        node_info = yaml.safe_load(f)
 
     main(
-        basic_info['node_name'],
-        basic_info['namespace'],
-        basic_info['package_name'],
-        basic_info['executable'],
-        f"{args.dir}/remappings.yaml")
+        node_info['node_name'],
+        node_info['namespace'],
+        node_info['package_name'],
+        node_info['executable'],
+        node_info['remappings']
+    )
