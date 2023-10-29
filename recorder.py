@@ -3,19 +3,19 @@ import os
 import time
 from datetime import datetime
 
-import rclpy
+import rclpy  # type: ignore
 import yaml
 
 
-def get_params_file_name(ns, node_name):
+def get_params_file_name(ns: str, node_name: str) -> str:
     ns_modified = ns
     if ns_modified[0] == '/':
         ns_modified = ns_modified[1:]
-    params_file_name = ns_modified + "/" + node_name + ".yaml"
-    return params_file_name.replace("/", "__")
+
+    return (ns_modified + "/" + node_name + ".yaml").replace("/", "__")
 
 
-def prepare_output_dir(params_file_name):
+def prepare_output_dir(params_file_name: str) -> None:
     abspath = os.path.abspath(__file__)
     dname = os.path.dirname(abspath)
     os.chdir(dname)
@@ -29,40 +29,41 @@ def prepare_output_dir(params_file_name):
     os.chdir(logdir)
 
 
-def main(node_name, ns, package_name, executable_name, remappings):
-    rclpy.init()
-    node = rclpy.create_node("node_input_topic_recorder")
-
-    # Need to wait for slow discovery protocol
-    time.sleep(5)
-
-    # names = node.get_node_names()
-    info = node.get_subscriber_names_and_types_by_node(node_name, ns)
-
+def main(
+    node_name: str,
+    ns: str,
+    package_name: str,
+    executable_name: str,
+    remappings: dict[str, str]
+) -> None:
+    # Dump params
     params_file_name = get_params_file_name(ns, node_name)
     prepare_output_dir(params_file_name)
-
     os.system(f"ros2 param dump {ns}/{node_name} > {params_file_name}")
 
-    record_command = "ros2 bag record /tf /tf_static"
-    for topic_and_types in info:
-        topic, types = topic_and_types
-        record_command = record_command + " " + topic
-    os.system(record_command)
-
+    # Create run script
     with open("ros2_run_" + package_name + "_" + executable_name, "w") as f:
         exec_command = "ros2 run " + package_name + " " + executable_name + \
                        " --ros-args --params-file " + params_file_name + \
                        " -r __ns:=" + ns + " -r __node:=" + node_name
-
         if remappings:
             for k, v in remappings.items():
                 exec_command = exec_command + " -r " + k + ":=" + v
 
         f.write(exec_command)
 
+    # Record input topics
+    rclpy.init()
+    node = rclpy.create_node("node_input_topic_recorder")
+    time.sleep(5)  # Need to wait for slow discovery protocol
+    subscriber_names_and_types = node.get_subscriber_names_and_types_by_node(node_name, ns)
     node.destroy_node()
     rclpy.shutdown()
+
+    record_command = "ros2 bag record /tf /tf_static"
+    for (topic, _) in subscriber_names_and_types:
+        record_command = record_command + " " + topic
+    os.system(record_command)
 
 
 if __name__ == "__main__":
