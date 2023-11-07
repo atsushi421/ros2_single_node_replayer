@@ -41,6 +41,16 @@ def main(
     prepare_output_dir(params_file_name)
     os.system(f"ros2 param dump {ns}/{node_name} > {params_file_name}")
 
+    # Since it cannot be run, if there is a ": []", comment out that line.
+    temp_file_name = "temp.yaml"
+    with open(params_file_name, 'r') as f, open(temp_file_name, 'w') as temp_f:
+        for line in f.readlines():
+            if ": []" in line:
+                temp_f.write("# " + line)
+            else:
+                temp_f.write(line)
+    os.replace(temp_file_name, params_file_name)
+
     # Create run script
     with open("ros2_run_" + package_name + "_" + executable_name, "w") as f:
         exec_command = "ros2 run " + package_name + " " + executable_name + \
